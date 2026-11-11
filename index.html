@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단원 핵심 낱말 카드</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Google Fonts Import */
+        @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+        }
+
+        .font-card {
+            font-family: 'Gowun Dodum', sans-serif;
+        }
+
+        /* 3D 카드 뒤집기 애니메이션 관련 CSS */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* 카드 그림자 및 질감 효과 */
+        .card-shadow {
+            box-shadow: 0 15px 35px -5px rgba(50, 50, 93, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between select-none">
+
+    <!-- ================================================================= -->
+    <!-- [선생님 설정 영역] 단어 및 뜻 목록을 아래에서 자유롭게 수정하세요! -->
+    <!-- ================================================================= -->
+    <script>
+        /**
+         * 낱말 카드 데이터 (상단 배치)
+         * - word: 카드 앞면에 표시될 단어
+         * - meaning: 카드 뒷면에 표시될 뜻/설명
+         * - category: (선택) 단원의 구분이나 힌트 태그
+         */
+        const WORD_LIST = [
+            { word: "광합성", meaning: "식물이 빛에너지를 이용하여 이산화 탄소와 물로부터 유기물(포도당)과 산소를 만들어 내는 과정", category: "과학" },
+            { word: "민주주의", meaning: "국가의 주권이 국민에게 있고 국민을 위하여 정치가 이루어지는 제도", category: "사회" },
+            { word: "비유법", meaning: "표현하려는 대상을 다른 대상에 비대어 표현하는 수사법 (예: 직유법, 은유법)", category: "국어" },
+            { word: "피타고라스 정리", meaning: "직각삼각형에서 직각을 끼고 있는 두 변의 길이를 각각 a, b라 하고 빗변의 길이를 c라 할 때, a² + b² = c² 이 성립한다는 정리", category: "수학" },
+            { word: "공감 (Empathy)", meaning: "타인의 감정, 생각, 상태를 이해하고 공유하는 마음이나 능력", category: "도덕" },
+            { word: "산업 혁명", meaning: "18세기 후반 영국에서 시작된 기술 혁신과 이로 인해 일어난 사회·경제적 대변혁", category: "역사" },
+            { word: "알고리즘", meaning: "어떤 문제를 해결하기 위해 정해진 일련의 절차나 명령의 집합", category: "정보" }
+        ];
+    </script>
+    <!-- ================================================================= -->
+
+    <!-- 상단 헤더 -->
+    <header class="w-full bg-white border-b border-slate-200 px-4 py-3 sm:py-4 shadow-sm">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-800 leading-tight">단원 핵심 낱말 카드</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">전자칠판 & 개별 기기용 학습 도구</p>
+                </div>
+            </div>
+            
+            <!-- 진행 상태 표시 -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm font-semibold text-indigo-700">
+                <span id="current-index">1</span> / <span id="total-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 (카드 영역) -->
+    <main class="grow flex flex-col items-center justify-center p-4 sm:p-6 w-full max-w-4xl mx-auto">
+        
+        <!-- 단어 카드 컨테이너 -->
+        <div id="card-container" class="w-full h-80 sm:h-[400px] md:h-[450px] perspective-1000 cursor-pointer group">
+            <div id="card-inner" class="relative w-full h-full transform-style-3d transition-transform duration-500 ease-in-out">
+                
+                <!-- 앞면 (낱말) -->
+                <div class="absolute inset-0 w-full h-full bg-white rounded-3xl card-shadow border border-slate-200/80 p-6 sm:p-10 flex flex-col justify-between backface-hidden">
+                    <!-- 상단 태그 -->
+                    <div class="flex justify-between items-center">
+                        <span id="card-category-front" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-slate-200">
+                            카테고리
+                        </span>
+                        <span class="text-xs sm:text-sm text-slate-400 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-hand-pointer animate-bounce"></i> 누르면 뒤집힙니다
+                        </span>
+                    </div>
+
+                    <!-- 중앙 낱말 -->
+                    <div class="my-auto text-center px-2">
+                        <h2 id="card-word" class="font-card text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-800 tracking-wide break-keep leading-tight">
+                            낱말
+                        </h2>
+                    </div>
+
+                    <!-- 하단 가이드 -->
+                    <div class="text-center text-xs sm:text-sm text-indigo-500 font-medium">
+                        <i class="fa-solid fa-rotate"></i> 뒷면의 뜻 확인하기
+                    </div>
+                </div>
+
+                <!-- 뒷면 (뜻) -->
+                <div class="absolute inset-0 w-full h-full bg-indigo-600 rounded-3xl card-shadow border border-indigo-500 p-6 sm:p-10 flex flex-col justify-between backface-hidden rotate-y-180 text-white">
+                    <!-- 상단 태그 -->
+                    <div class="flex justify-between items-center">
+                        <span id="card-category-back" class="bg-indigo-500/50 text-indigo-100 px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-indigo-400/40">
+                            카테고리
+                        </span>
+                        <span class="text-xs sm:text-sm text-indigo-200 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> 앞면으로 돌아가기
+                        </span>
+                    </div>
+
+                    <!-- 중앙 뜻/설명 -->
+                    <div class="my-auto text-center px-2 sm:px-6">
+                        <p id="card-meaning" class="font-card text-lg sm:text-2xl md:text-3xl font-bold leading-relaxed sm:leading-normal break-keep text-indigo-50">
+                            뜻 설명이 들어가는 자리입니다.
+                        </p>
+                    </div>
+
+                    <!-- 하단 가이드 -->
+                    <div class="text-center text-xs sm:text-sm text-indigo-200 font-medium">
+                        정답을 확인하셨나요?
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 키보드 조작 안내 (PC/전자칠판용) -->
+        <div class="mt-4 hidden md:flex items-center gap-4 text-xs text-slate-400">
+            <span><kbd class="px-1.5 py-0.5 bg-white border rounded text-slate-600 shadow-sm">Space</kbd> / <kbd class="px-1.5 py-0.5 bg-white border rounded text-slate-600 shadow-sm">Enter</kbd> 뒤집기</span>
+            <span><kbd class="px-1.5 py-0.5 bg-white border rounded text-slate-600 shadow-sm">←</kbd> 이전</span>
+            <span><kbd class="px-1.5 py-0.5 bg-white border rounded text-slate-600 shadow-sm">→</kbd> 다음</span>
+        </div>
+
+    </main>
+
+    <!-- 하단 조작 단추 (컨트롤러) -->
+    <footer class="w-full bg-white border-t border-slate-200 p-4 sm:p-6 shadow-lg">
+        <div class="max-w-xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+            
+            <!-- 이전 단추 -->
+            <button id="btn-prev" class="flex-1 py-3.5 sm:py-4 px-3 sm:px-5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold rounded-2xl transition duration-150 flex items-center justify-center gap-2 text-sm sm:text-base shadow-sm active:scale-95">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>이전</span>
+            </button>
+
+            <!-- 섞기 단추 -->
+            <button id="btn-shuffle" class="py-3.5 sm:py-4 px-4 sm:px-6 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold rounded-2xl transition duration-150 flex items-center justify-center gap-2 text-sm sm:text-base shadow-md active:scale-95 shrink-0" title="카드 섞기">
+                <i class="fa-solid fa-shuffle"></i>
+                <span class="hidden sm:inline">섞기</span>
+            </button>
+
+            <!-- 다음 단추 -->
+            <button id="btn-next" class="flex-1 py-3.5 sm:py-4 px-3 sm:px-5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold rounded-2xl transition duration-150 flex items-center justify-center gap-2 text-sm sm:text-base shadow-md active:scale-95">
+                <span>다음</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </div>
+    </footer>
+
+    <!-- 자바스크립트 로직 -->
+    <script>
+        // 상태 변수
+        let cards = [];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // DOM 요소
+        const cardContainer = document.getElementById('card-container');
+        const cardInner = document.getElementById('card-inner');
+        const cardWord = document.getElementById('card-word');
+        const cardMeaning = document.getElementById('card-meaning');
+        const cardCategoryFront = document.getElementById('card-category-front');
+        const cardCategoryBack = document.getElementById('card-category-back');
+        
+        const currentIndexEl = document.getElementById('current-index');
+        const totalCountEl = document.getElementById('total-count');
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnShuffle = document.getElementById('btn-shuffle');
+
+        // 초기화 함수
+        function initApp() {
+            // WORD_LIST가 비어있지 않은지 검사
+            if (!WORD_LIST || WORD_LIST.length === 0) {
+                cards = [{ word: "데이터 없음", meaning: "코드 상단의 WORD_LIST에 단어를 추가해 주세요.", category: "안내" }];
+            } else {
+                // 상단에 정의된 원본 데이터 복사
+                cards = [...WORD_LIST];
+            }
+
+            currentIndex = 0;
+            isFlipped = false;
+            totalCountEl.textContent = cards.length;
+
+            renderCard();
+        }
+
+        // 현재 카드를 화면에 출력
+        function renderCard() {
+            const currentCard = cards[currentIndex];
+
+            // 카드가 뒤집혀 있다면 먼저 앞면으로 돌리고 내용 변경
+            if (isFlipped) {
+                cardInner.classList.remove('rotate-y-180');
+                isFlipped = false;
+                
+                // 뒤집히는 애니메이션 시간을 고려하여 내용 교체
+                setTimeout(() => {
+                    updateCardContent(currentCard);
+                }, 200);
+            } else {
+                updateCardContent(currentCard);
+            }
+
+            // 인덱스 표시 업데이트
+            currentIndexEl.textContent = currentIndex + 1;
+
+            // 버튼 활성화/비활성화 처리
+            btnPrev.disabled = currentIndex === 0;
+            btnPrev.classList.toggle('opacity-40', currentIndex === 0);
+            btnPrev.classList.toggle('cursor-not-allowed', currentIndex === 0);
+
+            btnNext.disabled = currentIndex === cards.length - 1;
+            btnNext.classList.toggle('opacity-40', currentIndex === cards.length - 1);
+            btnNext.classList.toggle('cursor-not-allowed', currentIndex === cards.length - 1);
+        }
+
+        // 카드 텍스트 업데이트
+        function updateCardContent(card) {
+            cardWord.textContent = card.word || "";
+            cardMeaning.textContent = card.meaning || "";
+            
+            const categoryText = card.category || "핵심 낱말";
+            cardCategoryFront.textContent = categoryText;
+            cardCategoryBack.textContent = categoryText;
+        }
+
+        // 카드 뒤집기 토글
+        function flipCard() {
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardInner.classList.add('rotate-y-180');
+            } else {
+                cardInner.classList.remove('rotate-y-180');
+            }
+        }
+
+        // 다음 카드로 이동
+        function nextCard() {
+            if (currentIndex < cards.length - 1) {
+                currentIndex++;
+                renderCard();
+            }
+        }
+
+        // 이전 카드로 이동
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            }
+        }
+
+        // 카드 섞기 (피셔-예이츠 셔플 알고리즘)
+        function shuffleCards() {
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+            currentIndex = 0;
+            renderCard();
+
+            // 섞기 버튼에 살짝 회전 애니메이션 효과
+            const icon = btnShuffle.querySelector('i');
+            icon.classList.add('animate-spin');
+            setTimeout(() => {
+                icon.classList.remove('animate-spin');
+            }, 500);
+        }
+
+        // 이벤트 리스너 등록
+        cardContainer.addEventListener('click', flipCard);
+        btnNext.addEventListener('click', nextCard);
+        btnPrev.addEventListener('click', prevCard);
+        btnShuffle.addEventListener('click', shuffleCards);
+
+        // 키보드 단축키 지원 (전자칠판 리모컨 및 PC 키보드)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                nextCard();
+            } else if (e.key === 'ArrowLeft') {
+                prevCard();
+            } else if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault(); // 스크롤 등 기본 동작 방지
+                flipCard();
+            }
+        });
+
+        // 앱 시작
+        window.onload = initApp;
+    </script>
+</body>
+</html>
